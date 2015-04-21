@@ -5,26 +5,31 @@ from socket import *
 from time import strftime
 import threading,sys
 
-def server(sock, access, addr, size=1024):
+def server(sock, src, dst, size=1024):
     while True:
         try:
             #print('go go go!!!')
-            #sock.sendto('server give A a message'.encode('ascii'),addr)
-            #sock.sendto('server give B a message'.encode('ascii'),access)
-            data, addr = sock.recvfrom(BUFSIZ)
+            #sock.sendto('server give A a message'.encode('ascii'),(src[0],12512))
+            #sock.sendto('server give B a message'.encode('ascii'),(dst,12512))
+            data, src= sock.recvfrom(BUFSIZ)
+            if data.decode('ascii') == 'exit!':
+                sock.close()
+                print(repr(src),'socket close')
+                return
             time = strftime('%H:%M:%S')
-            data = repr(addr[0]) + '  ' + time+'\n    '+data.decode('ascii')
+            data = repr(src[0]) + '  ' + time+'\n    '+data.decode('ascii')
             print(data)
-            sock.sendto(data.encode('ascii'), access)
+            sock.sendto(data.encode('ascii'), (dst,12512))
         except timeout as e:
             pass
         except OSError as e:
+            sock.close()
             return 	
 
-s = socket(AF_INET, SOCK_DGRAM)
-s.connect(('baidu.com', 0))
-HOST = s.getsockname()[0]
-#HOST = '192.127.0.1'
+#s = socket(AF_INET, SOCK_DGRAM)
+#s.connect(('baidu.com', 0))
+#HOST = s.getsockname()[0]
+HOST = '192.127.0.1'
 #HOST = '127.0.0.1'
 
 PORT = 12512
@@ -38,43 +43,20 @@ SerSock.settimeout(1)
 print('waiting connect...')
 while True:
     try:
-        access, addr = SerSock.recvfrom(BUFSIZ)
-        for i in range( len(usrs) ):
-            if addr[0] in usrs[i][1]:
-                usrs[i][0].close()
-                usrs.remove(usrs[i])
-                for j in range( len(usrs) ):
-                    if addr[0] in usrs[j][2]:
-                        SerSock.sendto('\n->your vistor have log out,now he will not receive your message'.encode('ascii'),usrs[j][1])
-                print(repr(addr),'hava remove from server')
-                break
-            else:
-                access = (access.decode('ascii'),12512)
-                print(("received from %s 's request") % repr(addr))
-                sock=socket(AF_INET, SOCK_DGRAM)
-                sock.bind ((HOST,addr[1]))
-                print('bind address is ',HOST,addr[1])	#look bind address
-                sock.settimeout(1)
-                cli_addr = (addr[0], 12512)				#client recevie address
-                print(('successfully bound with %s') % repr(cli_addr))
+        dst, src = SerSock.recvfrom(BUFSIZ)
+        print(repr(dst),repr(src))
+        access = (dst.decode('ascii'),12512)
+        print(("received from %s 's request") % repr(src))
+        sock=socket(AF_INET, SOCK_DGRAM)
+        sock.bind ((HOST,src[1]))
+        print('bind address is ',HOST,src[1])	#look bind address
+        sock.settimeout(1)
+        print(('successfully bound with %s') % repr((HOST,src[1])))
 
-                for i in range( len(usrs) ):
-                    if access[0] in usrs[i][1]:
-                        SerSock.sendto("\nyour vistor have connect with server,so your message him can recevie".encode('ascii'),cli_addr)		
-                        isonline = True
-                        break
-                else:
-                    SerSock.sendto("\nyour vistor don't connect with server,so your message him can't recevie".encode('ascii'),cli_addr)		
-                    isonline = False
 
-                for i in range( len(usrs) ):	#check this client's IP is or not in other's access
-                    if addr[0] in usrs[i][2] and usrs[i][4] == False:
-                        SerSock.sendto('\n->your vistor has log on,now he can recevie your message\n'.encode('ascii'),usrs[i][1])
-                        usrs[i][4] = True
-
-                t=threading.Thread(target = server,args = (sock, access, cli_addr))
-                usrs.append([sock, cli_addr, access, t, isonline])
-                t.start()
-                print(repr(addr) + 'have start server')	
+        t=threading.Thread(target = server,args = (sock, src, dst))
+        #usrs.append([sock, src, dst, t])
+        t.start()
+        print(repr(src) + 'have start server')	
     except timeout as e:
         pass

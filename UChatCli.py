@@ -4,10 +4,10 @@ from socket import *
 import sys,re,time,threading
 from random import randint
 
-#Serip = '192.127.0.1'			#you should make sure the server ip is right
-Serip = '127.0.0.1'			#you should make sure the server ip is right
+Serip = '192.127.0.1'			#you should make sure the server ip is right
 SerPort = 12512
 SerAddr = (Serip, SerPort)
+Myip = '192.127.0.131'
 
 def isIP(ip=''):
     right ="^((\d|\d\d|[0-1]\d\d|2[0-4]\d|25[0-5])\.(\d|\d\d|[0-1]\d\d|2[0-4]\d|25[0-5])\.(\d|\d\d|[0-1]\d\d|2[0-4]\d|25[0-5])\.(\d|\d\d|[0-1]\d\d|2[0-4]\d|25[0-5]))$"
@@ -26,10 +26,10 @@ def recv(RevSock,BUFSIZ=1024):
     while True:
         try:
             data, aaa=RevSock.recvfrom(BUFSIZ)
-            for count in range(len(data)):
-                sys.stdout.write('\b \b')
-                sys.stdout.flush()
-                print(data.decode('ascii'))
+            #for count in range(len(data)):
+            #    sys.stdout.write('\b \b')
+            #    sys.stdout.flush()
+            print(data.decode('ascii'))
         except timeout as e:
             #print('no receive data')
             pass
@@ -51,7 +51,6 @@ def main():
     #Myip = s.getsockname()[0]
     #s.close()
     #Myip = '192.127.0.1'
-    Myip = '127.0.0.1'
     MyPort = randint(20000, 60000)
     MyAddr = (Myip, MyPort)
     VisAddr = (visit, MyPort)
@@ -66,7 +65,7 @@ def main():
 
     RevSock = socket(AF_INET, SOCK_DGRAM)
     RevSock.settimeout(1)
-    RevSock.bind((Myip, SerPort))
+    RevSock.bind((Myip,SerPort))
 
     print("programming have start.")
     print("if you want to exit the program,please input 'exit!' to leave the server\n")
@@ -80,7 +79,7 @@ def main():
             print('input error!!')
         if data == 'exit!':
             print()
-            Sock.sendto('exit'.encode('ascii'),SerAddr)
+            Sock.sendto('exit!'.encode('ascii'),(Serip,MyPort))
             Sock.close()
             print('send socket have closed')
             RevSock.close()
